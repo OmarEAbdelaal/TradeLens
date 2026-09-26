@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 const dir=mkdtempSync(join(tmpdir(),'tradelens-outlook-'));
 const originalFetch=globalThis.fetch;
 try{
- const aliases={'@/db/store':'./store.mjs','@/lib/market-server':'./market-server.mjs','@/lib/settings':'./settings.mjs','@/lib/paper':'./paper.mjs','@/lib/portfolio-outlook':'./outlook.mjs','zod':import.meta.resolve('zod')};
+ const aliases={'@/db/store':'./store.mjs','@/lib/market-server':'./market-server.mjs','@/lib/settings':'./settings.mjs','@/lib/paper':'./paper.mjs','@/lib/portfolio-outlook':'./outlook.mjs','@/lib/dfm-archive':'./archive.mjs','zod':import.meta.resolve('zod')};
  for(const [file,name] of [['lib/paper.ts','paper'],['lib/portfolio-outlook.ts','outlook'],['app/api/portfolio-outlook/route.ts','route']]){
   let js=ts.transpileModule(readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText;
   for(const [from,to] of Object.entries(aliases))js=js.replaceAll(`'${from}'`,`'${to}'`);
@@ -15,13 +15,14 @@ try{
  }
  writeFileSync(join(dir,'settings.mjs'),'export const loadSettings=async()=>globalThis.__settings;');
  writeFileSync(join(dir,'market-server.mjs'),'export const marketData=async()=>globalThis.__market;');
+ writeFileSync(join(dir,'archive.mjs'),"export const ARCHIVE_SOURCE='https://service.dfm.ae/Bulletins/';export const officialHistory=async()=>[];");
  writeFileSync(join(dir,'store.mjs'),`export const database=()=>({prepare:(sql)=>({bind:()=>({first:async()=>({data:JSON.stringify(globalThis.__account) }),all:async()=>({results:globalThis.__imports})}),all:async()=>({results:globalThis.__snapshots.map(m=>({data:JSON.stringify(m)}))})})});`);
  const {buildOutlook}=await import(join(dir,'outlook.mjs'));
  const {POST}=await import(join(dir,'route.mjs'));
  const date=new Date().toISOString().slice(0,10);
  const quotes=['HOLD','SHORT','GAIN','STALE'].map((symbol,i)=>({symbol,name:symbol,price:10+i,previous:9+i,change:1,volume:100,lastTrade:symbol==='STALE'?'2020-01-01':date,sharia:i%2===0}));
  const market={date,fetchedAt:new Date().toISOString(),source:'test',quotes};
- const snapshots=Array.from({length:11},(_,i)=>({date:new Date(Date.now()-(11-i)*86400000).toISOString().slice(0,10),quotes:[{...quotes[0],price:8+i*.15},{...quotes[2],price:8+i*.3},{...quotes[3],price:8+i*.2}]}));
+ const snapshots=Array.from({length:11},(_,i)=>({date:new Date(Date.now()-(11-i)*86400000).toISOString().slice(0,10),quotes:[{...quotes[0],price:8+i*.15,lastTrade:new Date(Date.now()-(11-i)*86400000).toISOString().slice(0,10)},{...quotes[2],price:8+i*.3,lastTrade:new Date(Date.now()-(11-i)*86400000).toISOString().slice(0,10)},{...quotes[3],price:8+i*.2,lastTrade:new Date(Date.now()-(11-i)*86400000).toISOString().slice(0,10)}]}));
  const account={cash:8000,initial:10000,broker:'alramz',trades:[{id:'one',symbol:'HOLD',name:'HOLD',side:'buy',qty:100,price:9,fee:12,quoteDate:date,date:new Date().toISOString(),broker:'alramz',shariaAtTrade:true},{id:'two',symbol:'SHORT',name:'SHORT',side:'buy',qty:10,price:10,fee:11,quoteDate:date,date:new Date().toISOString(),broker:'alramz',shariaAtTrade:false}]};
  const context=buildOutlook(market,account,snapshots.map(s=>({date:s.date,prices:Object.fromEntries(s.quotes.map(q=>[q.symbol,q.price]))})),[]);
  assert.equal(context.holdings.find(x=>x.symbol==='HOLD').eligible,true);
