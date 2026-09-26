@@ -16,7 +16,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ar">
+    <html lang="ar" suppressHydrationWarning>
+      <head><script dangerouslySetInnerHTML={{__html:"try{var t=localStorage.getItem('tradelens-theme')||'system';document.documentElement.dataset.theme=t==='system'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):t;var l=localStorage.getItem('tradelens-language');if(l==='en'){document.documentElement.lang='en';document.documentElement.dir='ltr'}}catch(e){}"}}/></head>
       <body className="antialiased">{children}</body>
     </html>
   );
