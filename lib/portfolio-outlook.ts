@@ -17,7 +17,7 @@ export function buildOutlook(market:Market,account:Account,snapshots:Snapshot[],
   const points=new Map<string,number>();
   for(const p of imported.get(q.symbol)||[])if(p.date<=market.date&&Number.isFinite(p.price)&&p.price>0)points.set(p.date,p.price);
   for(const [date,price] of official)points.set(date,price);
-  const recent=[...points].sort(([a],[b])=>a.localeCompare(b)).slice(-25).map(([date,price])=>({date,price}));
+  const recent=[...points].sort(([a],[b])=>a.localeCompare(b)).slice(-60).map(([date,price])=>({date,price}));
   const latest=recent.at(-1);
   const eligible=recent.length>=minSessions&&latest?.date===market.date&&q.lastTrade===market.date&&q.volume>0;
   const p=held.get(q.symbol);

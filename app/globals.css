@@ -311,3 +311,4 @@ label{font-size:.875rem}.subtext,.ai-panel p:not(.eyebrow),.connection-grid p,.m
 :root[data-theme="light"] .notice{background:#e4f5ed;color:#165744;border-color:#9bcdb7}
 :root[data-theme="light"] .error{background:#fff0ef;color:#8c2f37;border-color:#eab9b7}
 @media(max-width:600px){.appearance-grid{grid-template-columns:1fr}}
+.ai-result a,.research-sources a{color:var(--shade-8ce8d1);text-decoration:underline;text-underline-offset:3px}.research-sources{display:grid;gap:4px;margin-top:14px;padding-top:10px;border-top:1px solid var(--shade-365065);font-size:.82rem;overflow-wrap:anywhere}.research-sources a{width:fit-content}.block{display:block;margin-top:7px}
