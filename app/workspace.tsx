@@ -1,9 +1,10 @@
 'use client';
 import {useEffect,useState,useRef} from 'react';
-import {Activity,RefreshCw,Search,ShieldCheck,Wallet,ArrowUpRight,Database,Copy,ExternalLink,ChevronDown,ArrowUpDown,Sparkles} from 'lucide-react';
+import {Activity,RefreshCw,Search,ShieldCheck,Wallet,ArrowUpRight,Database,Copy,ExternalLink,Settings2,ChevronDown,ArrowUpDown,Sparkles,LogOut} from 'lucide-react';
 import {Tabs,TabsList,TabsTrigger,TabsContent} from '@/components/ui/tabs';
 import {Select,SelectTrigger,SelectValue,SelectContent,SelectItem} from '@/components/ui/select';
 import {Dialog,DialogContent,DialogTitle,DialogDescription} from '@/components/ui/dialog';
+import {DropdownMenu,DropdownMenuTrigger,DropdownMenuContent,DropdownMenuItem,DropdownMenuSeparator} from '@/components/ui/dropdown-menu';
 import {Table,TableHeader,TableBody,TableRow,TableHead,TableCell} from '@/components/ui/table';
 import {BROKERS,fees,totals,round,type Account,type Broker} from '@/lib/paper';
 import {canTrade,MARKET_SOURCE,type MarketResponse,type Quote} from '@/lib/market';
@@ -38,7 +39,7 @@ export default function Workspace(){
  const selectedOrder=quotes.find(q=>q.symbol===order?.symbol),orderFee=order&&Number.isFinite(order.qty)&&order.qty>0?fees(Math.round(order.qty*order.price*100)/100,order.broker):null;
  const orderReason=order&&selectedOrder&&market?canTrade(market,selectedOrder,data?.connection||'',order.side):'السعر غير متاح.';
  return <div className="shell arabic" dir="rtl">
- <header className="topbar"><a className="brand" href="/" dir="ltr"><span className="brandmark"><Activity size={23}/></span>Trade<span>Lens</span></a><div className="header-right"><span className="mode">أسهم حقيقية · رصيد افتراضي</span><button className="avatar account-button" aria-label="إعدادات الحساب" title="إعدادات الحساب" onClick={()=>setSettingsOpen(true)}>OE <ChevronDown size={13}/></button></div></header>
+ <header className="topbar"><a className="brand" href="/" dir="ltr"><span className="brandmark"><Activity size={23}/></span>Trade<span>Lens</span></a><div className="header-right"><span className="mode">أسهم حقيقية · رصيد افتراضي</span><DropdownMenu dir="rtl"><DropdownMenuTrigger className="avatar account-button" aria-label="خيارات الحساب" title="خيارات الحساب">OE <ChevronDown size={13}/></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={()=>setSettingsOpen(true)}><Settings2 size={16}/> إعدادات الحساب والـAI</DropdownMenuItem><DropdownMenuItem onSelect={()=>setTab("connections")}><Database size={16}/> المصادر والاتصالات</DropdownMenuItem><DropdownMenuSeparator/><DropdownMenuItem asChild><a href="/signout-with-chatgpt?return_to=%2F" target="_top"><LogOut size={16}/> تسجيل الخروج</a></DropdownMenuItem></DropdownMenuContent></DropdownMenu></div></header>
  <main><div className="pageheading"><div><p className="eyebrow">مساحة عمر للاستثمار</p><h1>جرّب قرارك. تابع نتيجته.</h1><p className="subtext">اختار سهمًا من سوق دبي، سجّل شراء افتراضي، وشوف المكسب أو الخسارة بعد الرسوم.</p></div><button className="secondary" onClick={refresh} disabled={loading||saving}><RefreshCw size={17} className={loading?'spin':''}/>{loading?'جارٍ التحديث…':'تحديث الأسعار'}</button></div>
  <div className="sample-banner"><Database size={19}/><span><strong>{market?`إغلاق جلسة ${market.date}`:'تحميل النشرة الرسمية'}</strong> · أسعار يومية وليست لحظية. العملية محاكاة بسعر الإغلاق، وليست تنفيذًا فعليًا.</span><a className="textbutton" href={MARKET_SOURCE} target="_blank" rel="noreferrer">نشرة DFM <ExternalLink size={14}/></a></div>
  {data?.error&&<div className="error" role="alert">{data.error}{market&&` المعروض آخر نسخة محفوظة بتاريخ ${market.date}.`}</div>}{error&&<div className="error" role="alert">{error}{error.includes('جلسة الدخول')?<a className="textbutton" href="/signin-with-chatgpt?return_to=%2F" target="_top">تسجيل الدخول</a>:<button className="textbutton" disabled={saving} onClick={refresh}>إعادة التحميل</button>}</div>}{notice&&<div className="notice" role="status">{notice}<button className="textbutton" onClick={()=>setNotice('')}>إغلاق</button></div>}
