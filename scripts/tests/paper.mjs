@@ -5,7 +5,7 @@ import {join} from 'node:path';
 import assert from 'node:assert/strict';
 const temp=mkdtempSync(join(tmpdir(),'tradelens-test-'));
 try{
- for(const name of ['market','paper'])writeFileSync(join(temp,name+'.mjs'),ts.transpileModule(readFileSync('lib/'+name+'.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText);
+ for(const name of ['markets','market','paper'])writeFileSync(join(temp,name+'.mjs'),ts.transpileModule(readFileSync('lib/'+name+'.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText.replaceAll("'./markets'","'./markets.mjs'"));
  const {parseBulletin,canTrade}=await import(join(temp,'market.mjs'));
  const {fees,newAccount,executeTrade,totals,positions}=await import(join(temp,'paper.mjs'));
  // A fixture assembled from the official column contract exercises false-positive Sharia titles.

@@ -1,5 +1,10 @@
 import {marketData} from '@/lib/market-server';
-import {database} from '@/db/store';
-import type {Market} from '@/lib/market';
+import {marketId,currencyCode,MARKETS} from '@/lib/markets';
+import {readAccount} from '@/lib/accounts-store';
+import {positions} from '@/lib/paper';
+import {savedMarketHistory} from '@/lib/market-history';
 export const dynamic='force-dynamic';
-export async function GET(req:Request){if(!req.headers.get('oai-authenticated-user-id'))return Response.json({error:'افتح التطبيق بحسابك لحفظ تجربتك الخاصة.'},{status:401});try{const result=await marketData();const rows=await database().prepare('SELECT data FROM market_snapshots ORDER BY date DESC LIMIT 90').all<{data:string}>();return Response.json({...result,history:rows.results.map(r=>{const m=JSON.parse(r.data) as Market;return {date:m.date,prices:Object.fromEntries(m.quotes.map(q=>[q.symbol,q.price]))}}).reverse()},{headers:{'Cache-Control':'no-store'}})}catch{return Response.json({error:'تعذّر تحميل بيانات السوق. حاول مرة أخرى.'},{status:503})}}
+export async function GET(req:Request){
+ if(!req.headers.get('oai-authenticated-user-id'))return Response.json({error:'تسجيل الدخول مطلوب.'},{status:401});
+ try{const params=new URL(req.url).searchParams,id=marketId(params.get('market'));const result=await marketData(id);const wallet=id==='dfm'?null:await readAccount(req.headers.get('oai-authenticated-user-id')!,id,currencyCode(params.get('currency'),MARKETS[id].currency));return Response.json({...result,history:result.market?await savedMarketHistory(result.market,wallet?positions(wallet.account).map(p=>p.symbol):undefined):[]},{headers:{'Cache-Control':'no-store'}})}catch{return Response.json({error:'تعذّر تحميل بيانات السوق. حاول مرة أخرى.'},{status:503})}
+}

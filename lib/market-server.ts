@@ -1,6 +1,9 @@
 import {database} from '@/db/store';
 import {parseBulletin,MARKET_SOURCE,type Market,type MarketResponse} from './market';
-export async function marketData():Promise<MarketResponse>{
+import type {MarketId} from './markets';
+import {exchangeData} from './exchange-store';
+export async function marketData(id:MarketId='dfm'):Promise<MarketResponse>{
+ if(id!=='dfm')return exchangeData(id);
  const db=database();const row=await db.prepare('SELECT data FROM market_snapshots ORDER BY date DESC LIMIT 1').first<{data:string}>();const cached=row?JSON.parse(row.data) as Market:null;
  if(cached&&Date.now()-Date.parse(cached.fetchedAt)<15*60*1000)return {market:cached,connection:'ok'};
  try{const response=await fetch(MARKET_SOURCE,{signal:AbortSignal.timeout(18000),headers:{Accept:'text/html'}});if(!response.ok)throw new Error('Source unavailable');const html=await response.text();if(html.length>3000000)throw new Error('Oversized bulletin');const fresh=parseBulletin(html);

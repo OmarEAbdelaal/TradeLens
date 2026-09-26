@@ -1,6 +1,6 @@
 export const MARKET_SOURCE='https://service.dfm.ae/Bulletins/';
-export type Quote={symbol:string;name:string;sector:string;price:number;previous:number;change:number;volume:number;lastTrade:string;sharia:boolean};
-export type Market={date:string;fetchedAt:string;source:string;quotes:Quote[]};
+export type Quote={symbol:string;name:string;sector:string;price:number;previous:number;change:number;volume:number;lastTrade:string;sharia:boolean;currency?:string;exchange?:string;ticker?:string;priceKind?:'close'|'delayed';updatedAt?:string};
+export type Market={date:string;fetchedAt:string;source:string;quotes:Quote[];id?:import('./markets').MarketId;sourceName?:string;totalCount?:number;priceKind?:'close'|'delayed';coverageNote?:string};
 export type MarketResponse={market:Market|null;connection:'ok'|'cached'|'unavailable';error?:string};
 const clean=(s:string)=>s.replace(/<[^>]*>/g,' ').replace(/&nbsp;|&#160;/g,' ').replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/\s+/g,' ').trim();
 const num=(s:string)=>{const v=clean(s).replace(/,/g,'');return /^-?\d+(\.\d+)?$/.test(v)?Number(v):NaN};
@@ -27,6 +27,8 @@ export function parseBulletin(html:string,now=new Date()):Market{
  return {date,fetchedAt:now.toISOString(),source:MARKET_SOURCE,quotes};
 }
 export function canTrade(m:Market,q:Quote,connection:string,side:'buy'|'sell',now=Date.now()){
+ if(q.currency==='XXX')return 'عملة التداول غير محددة لدى المصدر؛ المحاكاة غير متاحة.';
+ if(!Number.isFinite(q.price)||q.price<=0)return 'لا يوجد سعر صالح لهذا السهم في المصدر.';
  if(connection!=='ok')return 'تعذّر التأكد من المصدر الآن. حدّث الأسعار قبل تسجيل عملية.';
  if(now-Date.parse(m.date+'T00:00:00+04:00')>4*86400000)return 'نشرة الأسعار قديمة؛ التسجيل متوقف لحين وصول نشرة حديثة.';
  if(q.lastTrade!==m.date||q.volume<=0)return 'السهم لم يُتداول في تاريخ النشرة. لا نستخدم سعرًا قديمًا لتنفيذ التجربة.';

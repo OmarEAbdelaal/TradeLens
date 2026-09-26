@@ -1,5 +1,6 @@
 import {fees,positions,type Account} from './paper';
 import type {Market} from './market';
+import {tradingCurrency} from './markets';
 
 export type PricePoint={date:string;price:number};
 export type Snapshot={date:string;prices:Record<string,number>};
@@ -13,7 +14,7 @@ export function buildOutlook(market:Market,account:Account,snapshots:Snapshot[],
  const signals:Signal[]=market.quotes.map(q=>{
   const official=new Map<string,number>();
   for(const row of snapshots)if(row.date<=market.date&&Number.isFinite(row.prices[q.symbol])&&row.prices[q.symbol]>0)official.set(row.date,row.prices[q.symbol]);
-  official.set(market.date,q.price);
+  if(q.priceKind!=='delayed'&&q.lastTrade===market.date&&q.volume>0&&q.price>0)official.set(market.date,q.price);
   const points=new Map<string,number>();
   for(const p of imported.get(q.symbol)||[])if(p.date<=market.date&&Number.isFinite(p.price)&&p.price>0)points.set(p.date,p.price);
   for(const [date,price] of official)points.set(date,price);
@@ -21,8 +22,8 @@ export function buildOutlook(market:Market,account:Account,snapshots:Snapshot[],
   const latest=recent.at(-1);
   const eligible=recent.length>=minSessions&&latest?.date===market.date&&q.lastTrade===market.date&&q.volume>0;
   const p=held.get(q.symbol);
-  const netExit=p?Math.round((p.qty*q.price-fees(p.qty*q.price,account.broker).total-p.cost)*100)/100:null;
-  return {symbol:q.symbol,name:q.name,price:q.price,sharia:q.sharia,volume:q.volume,sessions:recent.length,officialSessions:official.size,importedSessions:recent.filter(r=>!official.has(r.date)).length,recent,change5:recent.length>=6?percent(q.price,recent.at(-6)!.price):null,change20:recent.length>=21?percent(q.price,recent.at(-21)!.price):null,eligible,quantity:p?.qty||0,cost:p?.cost||0,netExit};
+  const netExit=p?Math.round((p.qty*q.price-fees(p.qty*q.price,account.broker,account.marketId||'dfm',account.customFees).total-p.cost)*100)/100:null;
+  return {symbol:q.symbol,name:q.name,price:q.price,sharia:q.sharia,volume:q.volume,sessions:recent.length,officialSessions:recent.filter(r=>official.has(r.date)).length,importedSessions:recent.filter(r=>!official.has(r.date)).length,recent,change5:recent.length>=6?percent(latest!.price,recent.at(-6)!.price):null,change20:recent.length>=21?percent(latest!.price,recent.at(-21)!.price):null,eligible,quantity:p?.qty||0,cost:p?.cost||0,netExit};
  });
  const holdings=signals.filter(s=>s.quantity>0);
  const candidates=signals.filter(s=>!s.quantity&&s.eligible).sort((a,b)=>(b.change5??-Infinity)-(a.change5??-Infinity)).slice(0,10);

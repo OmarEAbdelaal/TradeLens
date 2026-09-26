@@ -1,7 +1,10 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, index } from 'drizzle-orm/sqlite-core';
 export const portfolios = sqliteTable('portfolios', {userId:text('user_id').primaryKey(), data:text('data').notNull(), version:integer('version').notNull().default(0)});
 export const paperAccounts=sqliteTable('paper_accounts',{userId:text('user_id').primaryKey(),data:text('data').notNull(),version:integer('version').notNull().default(0)});
 export const marketSnapshots=sqliteTable('market_snapshots',{date:text('date').primaryKey(),data:text('data').notNull()});
 export const officialPriceHistory=sqliteTable('official_price_history',{date:text('date').primaryKey(),data:text('data').notNull()});
 export const userSettings=sqliteTable('user_settings',{userId:text('user_id').primaryKey(),data:text('data').notNull(),updatedAt:text('updated_at').notNull()});
 export const userPriceHistory=sqliteTable('user_price_history',{key:text('key').primaryKey(),userId:text('user_id').notNull(),symbol:text('symbol').notNull(),data:text('data').notNull(),updatedAt:text('updated_at').notNull()});
+export const marketAccounts=sqliteTable('market_accounts',{key:text('key').primaryKey(),userId:text('user_id').notNull(),market:text('market').notNull(),currency:text('currency').notNull(),data:text('data').notNull(),version:integer('version').notNull().default(0)});
+export const exchangeCache=sqliteTable('exchange_cache',{key:text('key').primaryKey(),market:text('market').notNull(),generation:text('generation').notNull(),data:text('data').notNull()},t=>[index('idx_exchange_cache_market').on(t.market)]);
+export const exchangeHistory=sqliteTable('exchange_history',{key:text('key').primaryKey(),market:text('market').notNull(),date:text('date').notNull(),data:text('data').notNull()},t=>[index('idx_exchange_history_market_date').on(t.market,t.date)]);
