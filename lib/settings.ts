@@ -1,7 +1,7 @@
 import {env} from 'cloudflare:workers';
 import {database} from '@/db/store';
 
-export type Provider='openai'|'anthropic'|'gemini'|'compatible';
+export type Provider='openai'|'anthropic'|'gemini'|'openrouter'|'compatible';
 export type Preferences={defaultSharia:'all'|'approved'|'unmarked';refreshMinutes:0|5|15;compactRows:boolean};
 export type Settings={provider:Provider;model:string;endpoint:string;apiKey:string;preferences:Preferences};
 export const defaults:Settings={provider:'openai',model:'',endpoint:'',apiKey:'',preferences:{defaultSharia:'all',refreshMinutes:5,compactRows:false}};

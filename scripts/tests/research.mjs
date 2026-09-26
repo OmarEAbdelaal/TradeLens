@@ -1,0 +1,31 @@
+import ts from 'typescript';
+import {readFileSync,writeFileSync,mkdtempSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import assert from 'node:assert/strict';
+const temp=mkdtempSync(join(tmpdir(),'tradelens-research-'));
+const originalFetch=globalThis.fetch;
+try{
+  writeFileSync(join(temp,'settings.mjs'),'export const loadSettings=async()=>globalThis.__settings;');
+  writeFileSync(join(temp,'market.mjs'),'export const marketData=async()=>globalThis.__market;');
+  writeFileSync(join(temp,'store.mjs'),'export const database=()=>({prepare:()=>({bind:()=>({first:async()=>null})})});');
+  let js=ts.transpileModule(readFileSync('app/api/research/route.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText;
+  for(const [source,target] of Object.entries({'@/lib/settings':'./settings.mjs','@/lib/market-server':'./market.mjs','@/db/store':'./store.mjs','zod':import.meta.resolve('zod')}))js=js.replaceAll(`'${source}'`,`'${target}'`);
+  writeFileSync(join(temp,'route.mjs'),js);
+  const {POST}=await import(join(temp,'route.mjs'));
+  const date='2026-09-24';
+  globalThis.__market={market:{date,quotes:[{symbol:'DIB',name:'Bank',price:10,change:1,volume:100,sharia:true}]}};
+  globalThis.__settings={provider:'openrouter',model:'openrouter/free',apiKey:'test-only-secret',endpoint:'https://attacker.example/chat'};
+  let sent;
+  globalThis.fetch=async (url,options)=>{sent={url,options};return Response.json({choices:[{message:{content:'تحليل تجريبي'}}]})};
+  const req=(headers={})=>new Request('https://trade.example/api/research',{method:'POST',headers:{'Content-Type':'application/json','oai-authenticated-user-id':'omar',Origin:'https://trade.example',...headers},body:JSON.stringify({symbol:'DIB'})});
+  assert.equal((await POST(req({'oai-authenticated-user-id':''}))).status,401);
+  assert.equal((await POST(req({Origin:'https://elsewhere.example'}))).status,403);
+  const good=await POST(req());assert.equal(good.status,200);
+  assert.equal(sent.url,'https://openrouter.ai/api/v1/chat/completions');
+  assert.equal(sent.options.headers.Authorization,'Bearer test-only-secret');
+  assert.equal(JSON.parse(sent.options.body).model,'openrouter/free');
+  assert.equal((await good.json()).text,'تحليل تجريبي');
+  globalThis.__settings.apiKey='';assert.equal((await POST(req())).status,400);
+  console.log('PASS: OpenRouter fixed endpoint, Bearer key, model selection, response, auth, origin, missing key.');
+}finally{globalThis.fetch=originalFetch;delete globalThis.__market;delete globalThis.__settings;rmSync(temp,{recursive:true,force:true})}
