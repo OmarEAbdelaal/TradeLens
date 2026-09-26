@@ -11,9 +11,9 @@ try{
  writeFileSync(join(dir,'archive.mjs'),source);writeFileSync(join(dir,'store.mjs'),'export const database=()=>({});');
  const {archiveUrl,parseArchive}=await import(join(dir,'archive.mjs'));
  assert.equal(archiveUrl('2026-09-24'),'https://service.dfm.ae/Bulletins/Bulletins/DownloadFullExcel?bdate=Daily_Bulletin_24092026');
- const headings=['','Symbol - Security Name','Previous Close','','','','','Current Close','','','','Last Date','','Trade Volume'];
+ const headings=['Symbol-Security Name','Previous Close','','','','','Current Close','','','','Last Date','','Trade Volume'];
  const companies=['AMAN','DU','UPP','DSI','TECOM','EMPOWER'];
- const rows=[headings,...companies.map((symbol,i)=>{const row=Array(14).fill('');row[1]=`${symbol}- Example`;row[7]=String(i+1);row[11]=i===0?'23/09/2026':'24/09/2026';row[13]='100';return row})];
+ const rows=[headings,...companies.map((symbol,i)=>{const row=Array(13).fill('');row[0]=`${symbol} - Example`;row[6]=String(i+1);row[10]=i===0?'23/09/2026':'24/09/2026';row[12]='100';return row})];
  const book=XLSX.utils.book_new();XLSX.utils.book_append_sheet(book,XLSX.utils.aoa_to_sheet(rows),'Bulletins');
  const bytes=XLSX.write(book,{type:'buffer',bookType:'xlsx'});
  const result=parseArchive(bytes,'2026-09-24',new Set(companies));
