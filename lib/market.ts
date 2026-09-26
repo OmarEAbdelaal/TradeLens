@@ -30,6 +30,5 @@ export function canTrade(m:Market,q:Quote,connection:string,side:'buy'|'sell',no
  if(connection!=='ok')return 'تعذّر التأكد من المصدر الآن. حدّث الأسعار قبل تسجيل عملية.';
  if(now-Date.parse(m.date+'T00:00:00+04:00')>4*86400000)return 'نشرة الأسعار قديمة؛ التسجيل متوقف لحين وصول نشرة حديثة.';
  if(q.lastTrade!==m.date||q.volume<=0)return 'السهم لم يُتداول في تاريخ النشرة. لا نستخدم سعرًا قديمًا لتنفيذ التجربة.';
- if(side==='buy'&&!q.sharia)return 'لا توجد علامة توافق شرعي لهذا السهم في نشرة السوق؛ الشراء الافتراضي غير متاح.';
  return '';
 }

@@ -15,6 +15,13 @@
       "when": 1790434999596,
       "tag": "0001_skinny_crusher_hogan",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1790440687802,
+      "tag": "0002_naive_sentinel",
+      "breakpoints": true
     }
   ]
 }
