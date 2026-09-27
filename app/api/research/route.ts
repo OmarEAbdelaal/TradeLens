@@ -1,4 +1,5 @@
 import {z} from 'zod';
+import {captureAnalysis} from '@/lib/ai-history-store';
 import {loadSettings} from '@/lib/settings';
 import {marketData} from '@/lib/market-server';
 import {database} from '@/db/store';
@@ -51,7 +52,9 @@ Price provider source: ${market.source}; company page: ${companyUrl(quote.symbol
   const timer=setTimeout(()=>controller.abort(),90000);
   try{
    const answer=await requestModel(settings,prompt,5000,controller.signal,{webSearch:true});
-   return Response.json({text:answer.text.slice(0,20000),model:answer.model,provider:settings.provider,marketId:id,currency:tradingCurrency(quote),quoteDate:market.date,coverage:{sessions:history.sessionCount,official:history.officialSessionCount,imported:history.importedSessionCount,first:history.dailyCloses[0]?.date,last:history.dailyCloses.at(-1)?.date},citations:answer.citations,webSearchUsed:answer.webSearchUsed},{headers:{'Cache-Control':'no-store'}});
+   const result={text:answer.text.slice(0,20000),model:answer.model,provider:settings.provider,marketId:id,currency:tradingCurrency(quote),quoteDate:market.date,coverage:{sessions:history.sessionCount,official:history.officialSessionCount,imported:history.importedSessionCount,first:history.dailyCloses[0]?.date,last:history.dailyCloses.at(-1)?.date},citations:answer.citations,webSearchUsed:answer.webSearchUsed};
+   const saved=await captureAnalysis(user,{kind:'stock',market:id,currency:tradingCurrency(quote),subject:quote.symbol,model:answer.model,prompt,result});
+   return Response.json({...result,...saved},{headers:{'Cache-Control':'no-store'}});
   }finally{clearTimeout(timer)}
  }catch(error){
   if(error instanceof ModelProviderError)return Response.json({error:error.message},{status:error.status});

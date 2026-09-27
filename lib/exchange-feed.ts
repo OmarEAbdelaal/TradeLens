@@ -34,7 +34,9 @@ export async function fetchExchange(id:Exclude<MarketId,'dfm'>):Promise<Market>{
  for(let start=0;start===0||start<total;start+=5000){
   const filter:object[]=[{left:'type',operation:'in_range',right:['stock','dr']}];
   if(id!=='us')filter.push({left:'exchange',operation:'equal',right:id==='adx'?'ADX':'EGX'});
-  const response=await fetch(`https://scanner.tradingview.com/${MARKETS[id].scanner}/scan`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filter,columns:FEED_COLUMNS,sort:{sortBy:'name',sortOrder:'asc'},range:[start,start+5000]}),signal:AbortSignal.timeout(18000),redirect:'error'});
+  // Cloudflare Workers only implements "follow" and "manual". Using
+  // redirect:"error" throws before the provider request is sent.
+  const response=await fetch(`https://scanner.tradingview.com/${MARKETS[id].scanner}/scan`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filter,columns:FEED_COLUMNS,sort:{sortBy:'name',sortOrder:'asc'},range:[start,start+5000]}),signal:AbortSignal.timeout(18000),redirect:'manual'});
   if(!response.ok)throw new Error(`Market provider HTTP ${response.status}`);
   const page=await response.json() as FeedPage;
   if(!Array.isArray(page.data)||!Number.isInteger(page.totalCount)||page.totalCount<1||page.totalCount>50000||page.error)throw new Error('Invalid market provider response');

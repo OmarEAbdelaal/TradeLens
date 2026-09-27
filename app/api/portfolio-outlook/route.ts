@@ -1,4 +1,5 @@
 import {z} from 'zod';
+import {captureAnalysis} from '@/lib/ai-history-store';
 import {database} from '@/db/store';
 import {marketData} from '@/lib/market-server';
 import {loadSettings} from '@/lib/settings';
@@ -59,7 +60,9 @@ Perform a short live web search on the exact ${MARKETS[id].en} company names and
    const candidates=new Map(context.candidates.map(s=>[s.symbol,s]));
    const portfolio=context.holdings.map(s=>{const response=validated.data.holdings.find(e=>e.symbol===s.symbol);const supported=s.eligible&&!!response&&response.action!=='consider_buy';return {symbol:s.symbol,name:s.name,quantity:s.quantity,price:s.price,netExit:s.netExit,sharia:s.sharia,sessions:s.sessions,officialSessions:s.officialSessions,importedSessions:s.importedSessions,change5:s.change5,action:supported?response.action:'insufficient',outlook:supported?response.outlook:'unclear',reason:supported?response.reason:parsed.data.language==='en'?'There are too few historical closes to assess this stock. Add earlier closes and review the price and fees.':'التاريخ المتاح لهذا السهم لا يكفي لتقييم اتجاهه؛ أضف إغلاقات سابقة وراجع السعر والرسوم.',condition:supported?response.condition:parsed.data.language==='en'?'Reassess after additional closing sessions are available.':'تتغير القراءة بعد توفر جلسات إغلاق إضافية.'}});
    const seen=new Set<string>();const opportunities=validated.data.opportunities.filter(e=>{const s=candidates.get(e.symbol);if(!s||seen.has(e.symbol)||e.action!=='consider_buy'||e.outlook!=='up'||(s.change5??0)<=0)return false;seen.add(e.symbol);return true}).slice(0,3).map(e=>{const s=candidates.get(e.symbol)!;return {symbol:s.symbol,name:s.name,price:s.price,sharia:s.sharia,sessions:s.sessions,officialSessions:s.officialSessions,importedSessions:s.importedSessions,change5:s.change5,action:'consider_buy',outlook:e.outlook,reason:e.reason,condition:e.condition}});
-   return Response.json({marketId:id,currency,marketDate:market.date,horizon:parsed.data.horizon,model,coverage:context.coverage,overview:validated.data.overview,portfolio,opportunities,missingHoldings,citations,webSearchUsed},{headers:{'Cache-Control':'no-store'}});
+   const result={marketId:id,currency,marketDate:market.date,horizon:parsed.data.horizon,model,coverage:context.coverage,overview:validated.data.overview,portfolio,opportunities,missingHoldings,citations,webSearchUsed};
+   const saved=await captureAnalysis(user,{kind:'portfolio',market:id,currency,subject:parsed.data.horizon,model,prompt,result});
+   return Response.json({...result,...saved},{headers:{'Cache-Control':'no-store'}});
   }finally{clearTimeout(timer)}
  }catch(error){if(error instanceof ModelProviderError)return Response.json({error:error.message},{status:error.status});if(error instanceof Error&&error.name==='AbortError')return Response.json({error:'انتهت مهلة انتظار النموذج. حاول مجددًا.'},{status:504});return Response.json({error:'تعذّر إعداد مراجعة المحفظة أو الاتصال بالنموذج. حاول مجددًا.'},{status:503})}
 }

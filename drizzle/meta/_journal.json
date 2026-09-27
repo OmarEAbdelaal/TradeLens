@@ -43,6 +43,13 @@
       "when": 1790461148593,
       "tag": "0005_great_magma",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1790462211323,
+      "tag": "0006_worried_starfox",
+      "breakpoints": true
     }
   ]
 }
