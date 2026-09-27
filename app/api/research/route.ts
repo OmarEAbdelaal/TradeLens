@@ -33,7 +33,7 @@ export async function POST(req:Request){
   const id=parsed.data.marketId||'dfm';
   const [saved,accountResult,archive]=await Promise.all([
    db.prepare('SELECT data FROM user_price_history WHERE key=? AND user_id=?').bind(`${user}:${quote.symbol}`,user).first<{data:string}>(),
-   readAccount(user,id,tradingCurrency(quote)),marketHistory(id==='dfm'?market:{...market,quotes:[quote]},60)
+   readAccount(user,id,tradingCurrency(quote)),marketHistory(id==='dfm'?market:{...market,quotes:[quote]},id==='dfm'?90:270,id!=='dfm')
   ]);
   const imported=saved?JSON.parse(saved.data) as {date:string;price:number}[]:[];
   const history=stockResearchPacket(quote,market.date,archive,imported,id);
@@ -47,7 +47,7 @@ First perform a short live web search for the exact company name and ${MARKETS[i
 
 Produce a useful brief with plain-text headings (no Markdown): 1) Data coverage: exact provider-sourced and unverified session counts, first/last date, current close and volume; 2) Price behavior: dated 5-session move, 20-session move only when at least 21 closes exist, closing-price range (NOT intraday high/low), and what changed; 3) Company and recent catalysts with dated sources; 4) Conditional scenarios over the next 5 sessions and 20 sessions separately: upside, downside, invalidation signals and what to monitor; 5) If a virtual position exists, explain holding versus reviewing a sale with entry/exit fee impact; otherwise set conditions for considering a virtual buy rather than chasing a one-day jump. For a 5-session scenario, 10 dated closes can be sufficient; missing 20-session history does not block it. For a 20-session scenario, require at least 21 closes or a separately verified older series. Avoid precise return promises, unsupported targets and automatic orders. State unavailable data rather than calling historical closing range an intraday range. Sharia marking, when provided by DFM, is metadata rather than a ruling.
 
-Price provider source: ${market.source}; company page: ${companyUrl(quote.symbol,id)}. ${id==='dfm'?'DFM bulletin rows match symbol, trading date and volume.':'Prices come from a delayed third-party feed; stored historical closes and user imports are the only time series included. Do not call them an official exchange archive. Sharia classification is unavailable.'} User CSV is unverified and labeled. Use only verified, dated sources for external facts. Data: ${JSON.stringify({history,position})}`;
+Price provider source: ${market.source}; company page: ${companyUrl(quote.symbol,id)}. ${id==='dfm'?'DFM bulletin rows match symbol, trading date and volume.':'The current quote catalog comes from TradingView. The dated daily close and historical-volume series comes from Investing.com, is matched to the exact ticker and exchange, and is rejected if its latest price does not agree with the selected quote. It is a validated third-party series, not an official exchange archive. Sharia classification is unavailable.'} User CSV is unverified and labeled. Use only verified, dated sources for external facts. Data: ${JSON.stringify({history,position})}`;
   const controller=new AbortController();
   const timer=setTimeout(()=>controller.abort(),90000);
   try{

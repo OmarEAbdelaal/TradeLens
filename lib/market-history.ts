@@ -2,6 +2,7 @@ import {database} from '@/db/store';
 import type {Market} from './market';
 import {officialHistory} from './dfm-archive';
 import type {Snapshot} from './portfolio-outlook';
+import {providerHistorySnapshots} from './provider-history';
 export async function savedMarketHistory(market:Market,symbols?:string[]):Promise<Snapshot[]>{
  const db=database();
  if(!market.id||market.id==='dfm'){
@@ -15,7 +16,10 @@ export async function savedMarketHistory(market:Market,symbols?:string[]):Promis
  const days=new Map<string,Record<string,number>>();for(const row of rows.results){const raw=JSON.parse(row.data) as Record<string,number>;const prices=wanted?Object.fromEntries(Object.entries(raw).filter(([symbol])=>wanted.has(symbol))):raw;days.set(row.date,{...days.get(row.date),...prices})}
  return [...days].map(([date,prices])=>({date,prices}));
 }
-export async function marketHistory(market:Market,count=60):Promise<Snapshot[]>{
- const [saved,archive]=await Promise.all([savedMarketHistory(market,market.quotes.map(q=>q.symbol)),!market.id||market.id==='dfm'?officialHistory(market,count):Promise.resolve([])]);
- return [...archive,...saved];
+function mergeSnapshots(rows:Snapshot[]){
+ const days=new Map<string,Snapshot>();for(const row of rows){const old=days.get(row.date);days.set(row.date,{date:row.date,prices:{...old?.prices,...row.prices},volumes:{...old?.volumes,...row.volumes}})}return [...days.values()].sort((a,b)=>a.date.localeCompare(b.date));
+}
+export async function marketHistory(market:Market,count=60,hydrateProvider=false):Promise<Snapshot[]>{
+ const [saved,archive,provider]=await Promise.all([savedMarketHistory(market,market.quotes.map(q=>q.symbol)),!market.id||market.id==='dfm'?officialHistory(market,count):Promise.resolve([]),hydrateProvider&&market.id&&market.id!=='dfm'?providerHistorySnapshots(market):Promise.resolve({snapshots:[]})]);
+ return mergeSnapshots([...archive,...saved,...provider.snapshots]).slice(-count);
 }

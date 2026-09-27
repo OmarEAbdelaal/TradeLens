@@ -3,16 +3,17 @@ import {tradingCurrency,type MarketId} from './markets';
 import type {Snapshot,PricePoint} from './portfolio-outlook';
 
 export function stockResearchPacket(quote:Quote,marketDate:string,archive:Snapshot[],imports:PricePoint[],marketId:MarketId='dfm'){
- const sourceName=marketId==='dfm'?'DFM bulletin':'TradingView stored daily close';
+ const sourceName=marketId==='dfm'?'DFM bulletin':'Investing.com validated daily history';
  const official=new Map<string,number>();
+ const volumes=new Map<string,number>();
  for(const day of archive)if(day.date<=marketDate&&Number.isFinite(day.prices[quote.symbol])&&day.prices[quote.symbol]>0)
-  official.set(day.date,day.prices[quote.symbol]);
- if(quote.priceKind!=='delayed'&&quote.lastTrade===marketDate&&quote.volume>0)official.set(marketDate,quote.price);
- const points=new Map<string,{date:string;close:number;source:string}>();
+  {official.set(day.date,day.prices[quote.symbol]);const volume=day.volumes?.[quote.symbol];if(typeof volume==='number'&&Number.isFinite(volume)&&volume>=0)volumes.set(day.date,volume)}
+ if(quote.priceKind!=='delayed'&&quote.lastTrade===marketDate&&quote.volume>0){official.set(marketDate,quote.price);volumes.set(marketDate,quote.volume)}
+ const points=new Map<string,{date:string;close:number;volume?:number;source:string}>();
  for(const point of imports)if(point.date<=marketDate&&Number.isFinite(point.price)&&point.price>0)
-  points.set(point.date,{date:point.date,close:point.price,source:'User CSV (unverified)'});
- for(const [date,close] of official)points.set(date,{date,close,source:sourceName});
- const closes=[...points.values()].sort((a,b)=>a.date.localeCompare(b.date)).slice(-60);
+  points.set(point.date,{date:point.date,close:point.price,volume:point.volume,source:'User CSV (unverified)'});
+ for(const [date,close] of official)points.set(date,{date,close,volume:volumes.get(date),source:sourceName});
+ const closes=[...points.values()].sort((a,b)=>a.date.localeCompare(b.date)).slice(-270);
  const latest=closes.at(-1);
  const change=(period:number)=>closes.length>=period+1&&latest
   ?Math.round((latest.close/closes.at(-period-1)!.close-1)*10000)/100:null;
@@ -25,6 +26,6 @@ export function stockResearchPacket(quote:Quote,marketDate:string,archive:Snapsh
   change5SessionsPercent:change(5),change20SessionsPercent:change(20),
   closingRangeLast20:last20.length>=2?{low:Math.min(...last20),high:Math.max(...last20)}:null,
   dailyCloses:closes,
-  notes:['Daily closes are not intraday highs or lows. Historical volumes, intraday ranges, financial statements, and news are not included in this price-history packet.','User CSV rows are unverified; provider closes override same-date CSV closes.']
+  notes:['Daily closes are not intraday highs or lows. Historical volume is included when supplied by the matched provider; intraday ranges, financial statements and news are not part of this price packet.','User CSV rows are unverified; provider closes override same-date CSV closes.']
  };
 }

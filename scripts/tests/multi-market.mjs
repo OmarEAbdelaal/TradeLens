@@ -20,9 +20,9 @@ try{
  const {parseFeed,fetchExchange}=await import(join(temp,'exchange-feed.mjs'));
  const {stockResearchPacket}=await import(join(temp,'research-packet.mjs'));
  const now=new Date('2026-09-26T20:00:00Z');
- const row=(symbol,currency='EGP',close=20)=>({s:'EGX:'+symbol,d:[symbol,'Company '+symbol,'EGX',currency,close,2,0.4,100,1790233200,'Finance','delayed_streaming_900']});
- const egypt=parseFeed([row('ONE'),row('TWO','USD'),row('NOPRICE','EGP',null)],'egx',3,now);
- assert.equal(egypt.quotes.length,3);assert.equal(egypt.quotes[1].currency,'USD');assert.equal(egypt.quotes[2].price,0);assert.equal(egypt.date,'2026-09-24');
+ const row=(symbol,currency='EGP',close=20,isin)=>({s:'EGX:'+symbol,d:[symbol,'Company '+symbol,'EGX',currency,close,2,0.4,100,1790233200,'Finance','delayed_streaming_900',isin]});
+ const egypt=parseFeed([row('ONE','EGP',20,'EGS123456789'),row('TWO','USD'),row('NOPRICE','EGP',null)],'egx',3,now);
+ assert.equal(egypt.quotes.length,3);assert.equal(egypt.quotes[0].isin,'EGS123456789');assert.equal(egypt.quotes[1].currency,'USD');assert.equal(egypt.quotes[2].price,0);assert.equal(egypt.date,'2026-09-24');
  const a=newAccount('egx');assert.equal(a.currency,'EGP');
  const q=egypt.quotes[0],input={id:'test-buy',side:'buy',qty:10,broker:'alramz',note:'',customFees:{percent:.1,fixed:2}};
  const bought=executeTrade(a,q,egypt,input,now);assert.equal(bought.cash,9797.8);assert.equal(bought.trades[0].fee,2.2);assert.equal(bought.trades[0].currency,'EGP');

@@ -1,7 +1,7 @@
 import type {Market,Quote} from './market';
 import {MARKETS,sessionCompleted,type MarketId} from './markets';
 
-export const FEED_COLUMNS=['name','description','exchange','currency','close','change','change_abs','volume','time','sector','update_mode'];
+export const FEED_COLUMNS=['name','description','exchange','currency','close','change','change_abs','volume','time','sector','update_mode','isin'];
 type FeedRow={s:string;d:unknown[]};
 type FeedPage={totalCount:number;data:FeedRow[];error?:string};
 export function parseFeed(rows:FeedRow[],id:MarketId,totalCount:number,now=new Date()):Market{
@@ -9,7 +9,7 @@ export function parseFeed(rows:FeedRow[],id:MarketId,totalCount:number,now=new D
  const dateFormat=new Intl.DateTimeFormat('en-CA',{timeZone:MARKETS[id].zone,year:'numeric',month:'2-digit',day:'2-digit'});
  const dateCache=new Map<number,string>(),completedCache=new Map<string,boolean>();
  for(const row of rows){
-  const [ticker,name,exchange,currency,close,change,delta,volume,timestamp,sector]=row.d;
+  const [ticker,name,exchange,currency,close,change,delta,volume,timestamp,sector,_updateMode,isin]=row.d;
   if(typeof row.s!=='string'||!row.s.includes(':')||seen.has(row.s)||typeof ticker!=='string'||typeof name!=='string')continue;
   if(id==='adx'&&exchange!=='ADX'||id==='egx'&&exchange!=='EGX')continue;
   // Never guess a missing trading currency or turn an unavailable quote into a tradable price.
@@ -21,7 +21,7 @@ export function parseFeed(rows:FeedRow[],id:MarketId,totalCount:number,now=new D
   if(!completedCache.has(date))completedCache.set(date,!!date&&sessionCompleted(date,id,now));
   const dailyChange=typeof change==='number'&&Number.isFinite(change)?change:0;
   const previous=valid&&typeof delta==='number'&&Number.isFinite(delta)?close-delta:valid?close:0;
-  quotes.push({symbol:row.s,ticker,name,exchange:String(exchange||''),currency:unit,sector:typeof sector==='string'?sector:'Other',price:valid?close:0,previous,change:dailyChange,volume:typeof volume==='number'&&Number.isFinite(volume)&&volume>0?volume:0,lastTrade:date,sharia:false,priceKind:completedCache.get(date)?'close':'delayed',updatedAt:instant?.toISOString()});seen.add(row.s);
+  quotes.push({symbol:row.s,ticker,name,exchange:String(exchange||''),currency:unit,sector:typeof sector==='string'?sector:'Other',price:valid?close:0,previous,change:dailyChange,volume:typeof volume==='number'&&Number.isFinite(volume)&&volume>0?volume:0,lastTrade:date,sharia:false,isin:typeof isin==='string'&&/^[A-Z]{2}[A-Z0-9]{9}[0-9]$/.test(isin)?isin:undefined,priceKind:completedCache.get(date)?'close':'delayed',updatedAt:instant?.toISOString()});seen.add(row.s);
  }
  if(!quotes.length)throw new Error('No securities returned');
  const date=quotes.reduce((latest,q)=>q.lastTrade>latest?q.lastTrade:latest,'');

@@ -2,8 +2,8 @@ import {fees,positions,type Account} from './paper';
 import type {Market} from './market';
 import {tradingCurrency} from './markets';
 
-export type PricePoint={date:string;price:number};
-export type Snapshot={date:string;prices:Record<string,number>};
+export type PricePoint={date:string;price:number;volume?:number};
+export type Snapshot={date:string;prices:Record<string,number>;volumes?:Record<string,number>};
 export type Imported={symbol:string;points:PricePoint[]};
 export type Signal={symbol:string;name:string;price:number;sharia:boolean;volume:number;sessions:number;officialSessions:number;importedSessions:number;recent:PricePoint[];change5:number|null;change20:number|null;eligible:boolean;quantity:number;cost:number;netExit:number|null};
 
@@ -18,7 +18,7 @@ export function buildOutlook(market:Market,account:Account,snapshots:Snapshot[],
   const points=new Map<string,number>();
   for(const p of imported.get(q.symbol)||[])if(p.date<=market.date&&Number.isFinite(p.price)&&p.price>0)points.set(p.date,p.price);
   for(const [date,price] of official)points.set(date,price);
-  const recent=[...points].sort(([a],[b])=>a.localeCompare(b)).slice(-60).map(([date,price])=>({date,price}));
+  const recent=[...points].sort(([a],[b])=>a.localeCompare(b)).slice(-120).map(([date,price])=>({date,price,volume:snapshots.find(s=>s.date===date)?.volumes?.[q.symbol]}));
   const latest=recent.at(-1);
   const eligible=recent.length>=minSessions&&latest?.date===market.date&&q.lastTrade===market.date&&q.volume>0;
   const p=held.get(q.symbol);
