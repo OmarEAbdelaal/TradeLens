@@ -1,0 +1,8 @@
+import {database} from '@/db/store';
+import {isMarketId} from '@/lib/markets';
+export const dynamic='force-dynamic';
+export async function GET(req:Request){
+ const user=req.headers.get('oai-authenticated-user-id');if(!user)return Response.json({error:'تسجيل الدخول مطلوب.'},{status:401});
+ const p=new URL(req.url).searchParams,market=p.get('market'),currency=p.get('currency');if(!isMarketId(market)||!currency||!/^[A-Z]{3}$/.test(currency))return Response.json({error:'اختر السوق والعملة.'},{status:400});
+ try{const rows=await database().prepare(`SELECT h.subject AS symbol,h.id AS historyId,h.created_at AS createdAt,json_extract(h.result,'$.decision.preferenceScore') AS score,json_extract(h.result,'$.decision.horizonSessions') AS horizon,json_extract(h.result,'$.decision.blocked') AS blocked,json_extract(h.result,'$.decision.quantity') AS quantity,json_extract(h.result,'$.quoteDate') AS quoteDate,json_extract(h.result,'$.historicalRate') AS historicalRate FROM ai_selections s JOIN ai_history h ON h.id=s.history_id AND h.user_id=s.user_id WHERE s.user_id=? AND h.kind='stock' AND h.market=? AND h.currency=? LIMIT 20000`).bind(user,market,currency).all<{symbol:string;historyId:string;createdAt:string;score:number|null;horizon:number|null;blocked:string|null;quantity:number|null;quoteDate:string|null;historicalRate:string|null}>();return Response.json({items:rows.results.map(r=>({...r,horizon:r.horizon||5,blocked:r.blocked?JSON.parse(r.blocked):['history'],historicalRate:r.historicalRate?JSON.parse(r.historicalRate):null}))},{headers:{'Cache-Control':'no-store'}})}catch{return Response.json({error:'تعذّر استرجاع ترشيحات الأسهم.'},{status:503})}
+}
