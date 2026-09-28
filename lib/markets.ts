@@ -1,5 +1,5 @@
 export const MARKET_IDS=['dfm','nasdaqdubai','adx','egx','us','saudi','qatar','kuwait','bahrain'] as const;
-export const EXCHANGES:Record<string,string>={dfm:'DFM',nasdaqdubai:'NASDAQDUBAI',adx:'ADX',egx:'EGX',saudi:'TADAWUL',qatar:'QSE',kuwait:'KSE',bahrain:'BHB'};
+export const EXCHANGES:Record<string,string>={dfm:'DFM',nasdaqdubai:'NASDAQDUBAI',adx:'ADX',egx:'EGX',saudi:'TADAWUL',qatar:'QSE',kuwait:'KSE',bahrain:'BAHRAIN'};
 export const MARKETS={
  dfm:{ar:'سوق دبي المالي',en:'Dubai Financial Market',currency:'AED',zone:'Asia/Dubai',source:'https://service.dfm.ae/Bulletins/',scanner:'uae'},
  nasdaqdubai:{ar:'ناسداك دبي',en:'Nasdaq Dubai',currency:'USD',zone:'Asia/Dubai',source:'https://www.nasdaqdubai.com/trading/historical-prices',scanner:'uae'},

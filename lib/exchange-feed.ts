@@ -9,11 +9,14 @@ export function parseFeed(rows:FeedRow[],id:MarketId,totalCount:number,now=new D
  const dateFormat=new Intl.DateTimeFormat('en-CA',{timeZone:MARKETS[id].zone,year:'numeric',month:'2-digit',day:'2-digit'});
  const dateCache=new Map<number,string>(),completedCache=new Map<string,boolean>();
  for(const row of rows){
-  const [ticker,name,exchange,currency,close,change,delta,volume,timestamp,sector,_updateMode,isin]=row.d;
+  const [ticker,name,exchange,currency,rawClose,change,rawDelta,volume,timestamp,sector,_updateMode,isin]=row.d;
+  // KWF is a quoted fils denomination: 1 KWD = 1000 fils (not an FX conversion).
+  const scale=currency==='KWF'?1000:1;
+  const close=typeof rawClose==='number'?rawClose/scale:rawClose,delta=typeof rawDelta==='number'?rawDelta/scale:rawDelta;
   if(typeof row.s!=='string'||!row.s.includes(':')||seen.has(row.s)||typeof ticker!=='string'||typeof name!=='string')continue;
   if(EXCHANGES[id]&&exchange!==EXCHANGES[id])continue;
   // Never guess a missing trading currency or turn an unavailable quote into a tradable price.
-  const unit=typeof currency==='string'&&/^[A-Z]{3}$/.test(currency)?currency:'XXX';
+  const unit=currency==='KWF'?'KWD':typeof currency==='string'&&/^[A-Z]{3}$/.test(currency)?currency:'XXX';
   const valid=typeof close==='number'&&Number.isFinite(close)&&close>0;
   const instant=typeof timestamp==='number'&&timestamp>0&&timestamp*1000<=now.getTime()+86400000?new Date(timestamp*1000):null;
   const stamp=instant?.getTime()||0;

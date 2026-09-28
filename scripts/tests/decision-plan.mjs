@@ -33,5 +33,6 @@ try{
   const m=parseFeed([row],id,1,new Date('2026-09-28T20:00:00Z'));assert.equal(m.id,id);assert.equal(m.quotes[0].symbol,id==='dfm'?ticker:row.s);assert.equal(m.quotes[0].currency,MARKETS[id].currency);
   if(EXCHANGES[id])assert.throws(()=>parseFeed([{...row,d:[ticker,'Wrong','OTHER','USD',10,1,.1,10,1790582400]}],id,1));
  }
+ const kw=parseFeed([{s:'KSE:TEST',d:['TEST','Example','KSE','KWF',932,1,10,100,1790575200,'Property','delayed_streaming_900']}],'kuwait',1,new Date('2026-09-28T20:00:00Z'));assert.equal(kw.quotes[0].price,.932);assert.equal(kw.quotes[0].currency,'KWD');assert.equal(kw.quotes[0].delaySeconds,900);assert.ok(Math.abs(kw.quotes[0].previous-.922)<1e-9);
  console.log('PASS: fee minimum/tax, DFM custom profiles, nine exchange identities, risk/cash sizing, missing-data and Sharia gates, invalid stops and existing-position guard.');
 }finally{rmSync(dir,{recursive:true,force:true})}
