@@ -9,7 +9,12 @@ type HistoryPayload={data?:HistoryRow[]};
 type CacheRow={provider_id:number;source:string;data:string;fetched_through:string;updated_at:string};
 export type ProviderHistory={points:PricePoint[];source:string;providerId:number;cached:boolean};
 
-const MARKET_MATCH:Record<Exclude<MarketId,'dfm'>,(item:SearchItem)=>boolean>={
+const MARKET_MATCH:Partial<Record<Exclude<MarketId,'dfm'>,(item:SearchItem)=>boolean>>={
+ nasdaqdubai:item=>['Nasdaq Dubai','NASDAQ Dubai','NASDAQ Dubai Ltd'].includes(item.exchange||''),
+ saudi:item=>['Saudi Arabia','Saudi Arabia Stock Exchange','Tadawul','Saudi Arabia Exchange'].includes(item.exchange||''),
+ qatar:item=>['Qatar','Doha','Qatar Exchange'].includes(item.exchange||''),
+ kuwait:item=>['Kuwait','Kuwait Stock Exchange'].includes(item.exchange||''),
+ bahrain:item=>['Bahrain','Bahrain Stock Exchange'].includes(item.exchange||''),
  adx:item=>item.exchangeID===100||item.exchange==='Abu Dhabi',
  egx:item=>item.exchangeID===33||item.countryID===59||item.exchange==='Egypt',
  us:item=>item.countryID===5||item.exchange==='NASDAQ'||item.exchange==='NYSE'||item.exchange==='NYSE Amex'||item.exchange==='OTC Markets'
@@ -22,7 +27,7 @@ export function parseInvestingSearch(html:string){
 }
 export function selectInvestingInstrument(items:SearchItem[],quote:Quote,id:Exclude<MarketId,'dfm'>){
  const ticker=quote.ticker||quote.symbol.split(':').at(-1)||quote.symbol;
- const candidates=items.filter(item=>item.pair_type==='equities'&&MARKET_MATCH[id](item)&&normalized(item.symbol)===normalized(ticker));
+ const candidates=items.filter(item=>item.pair_type==='equities'&&MARKET_MATCH[id]?.(item)&&normalized(item.symbol)===normalized(ticker));
  if(candidates.length===1)return candidates[0];
  const words=quote.name.toLowerCase().split(/\W+/).filter(w=>w.length>3);
  return candidates.sort((a,b)=>words.filter(w=>b.name.toLowerCase().includes(w)).length-words.filter(w=>a.name.toLowerCase().includes(w)).length)[0]||null;
@@ -59,6 +64,7 @@ async function fetchFresh(quote:Quote,id:Exclude<MarketId,'dfm'>,marketDate:stri
  return {points,source:`https://www.investing.com${item.link.replace(/-historical-data$/,'')}-historical-data`,providerId:item.pairId,cached:false};
 }
 export async function providerHistory(quote:Quote,id:Exclude<MarketId,'dfm'>,marketDate:string):Promise<ProviderHistory|null>{
+ if(!MARKET_MATCH[id])return null;
  const db=database(),key=`${id}:${quote.symbol}`;
  const row=await db.prepare('SELECT provider_id,source,data,fetched_through,updated_at FROM provider_price_history WHERE key=?').bind(key).first<CacheRow>();
  if(row&&row.fetched_through>=marketDate)return {points:JSON.parse(row.data),source:row.source,providerId:row.provider_id,cached:true};

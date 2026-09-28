@@ -20,7 +20,7 @@ export function buildOutlook(market:Market,account:Account,snapshots:Snapshot[],
   for(const [date,price] of official)points.set(date,price);
   const recent=[...points].sort(([a],[b])=>a.localeCompare(b)).slice(-120).map(([date,price])=>({date,price,volume:snapshots.find(s=>s.date===date)?.volumes?.[q.symbol]}));
   const latest=recent.at(-1);
-  const eligible=recent.length>=minSessions&&latest?.date===market.date&&q.lastTrade===market.date&&q.volume>0;
+  const eligible=recent.length>=minSessions&&!!latest&&Date.parse(market.date)-Date.parse(latest.date)<=4*86400000&&q.lastTrade===market.date&&q.volume>0;
   const p=held.get(q.symbol);
   const netExit=p?Math.round((p.qty*q.price-fees(p.qty*q.price,account.broker,account.marketId||'dfm',account.customFees).total-p.cost)*100)/100:null;
   return {symbol:q.symbol,name:q.name,price:q.price,sharia:q.sharia,volume:q.volume,sessions:recent.length,officialSessions:recent.filter(r=>official.has(r.date)).length,importedSessions:recent.filter(r=>!official.has(r.date)).length,recent,change5:recent.length>=6?percent(latest!.price,recent.at(-6)!.price):null,change20:recent.length>=21?percent(latest!.price,recent.at(-21)!.price):null,eligible,quantity:p?.qty||0,cost:p?.cost||0,netExit};

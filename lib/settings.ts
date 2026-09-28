@@ -2,9 +2,9 @@ import {env} from 'cloudflare:workers';
 import {database} from '@/db/store';
 
 export type Provider='openai'|'anthropic'|'gemini'|'openrouter'|'compatible';
-export type Preferences={defaultSharia:'all'|'approved'|'unmarked';refreshMinutes:0|5|15;compactRows:boolean};
+export type Preferences={defaultSharia:'all'|'approved'|'unmarked';refreshMinutes:0|1|5|15;compactRows:boolean};
 export type Settings={provider:Provider;model:string;endpoint:string;apiKey:string;preferences:Preferences};
-export const defaults:Settings={provider:'openai',model:'gpt-6-luna',endpoint:'',apiKey:'',preferences:{defaultSharia:'all',refreshMinutes:5,compactRows:false}};
+export const defaults:Settings={provider:'openai',model:'gpt-6-luna',endpoint:'',apiKey:'',preferences:{defaultSharia:'all',refreshMinutes:1,compactRows:false}};
 type Stored=Omit<Settings,'apiKey'>&{secret?:string};
 const bytes=new TextEncoder();
 function encryptionKey(){const raw=env.TRADELENS_ENCRYPTION_KEY;if(!raw)throw new Error('Secret configuration unavailable');return crypto.subtle.importKey('raw',Uint8Array.from(atob(raw),c=>c.charCodeAt(0)),'AES-GCM',false,['encrypt','decrypt']);}

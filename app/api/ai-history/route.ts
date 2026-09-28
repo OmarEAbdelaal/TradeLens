@@ -1,7 +1,8 @@
+import {MARKET_IDS} from '@/lib/markets';
 import {z} from 'zod';
 import {saveAnalysis,getAnalysis,activeAnalysis,selectAnalysis,listAnalyses} from '@/lib/ai-history-store';
 export const dynamic='force-dynamic';
-const scopeSchema=z.object({kind:z.enum(['stock','portfolio','stock_prompt','portfolio_prompt']),market:z.enum(['dfm','adx','egx','us']),currency:z.string().regex(/^[A-Z]{3}$/),subject:z.string().min(1).max(80)});
+const scopeSchema=z.object({kind:z.enum(['stock','portfolio','stock_prompt','portfolio_prompt']),market:z.enum(MARKET_IDS),currency:z.string().regex(/^[A-Z]{3}$/),subject:z.string().min(1).max(80)});
 const promptSchema=scopeSchema.extend({kind:z.enum(['stock_prompt','portfolio_prompt']),prompt:z.string().min(1).max(300000)}).strict();
 const headers={'Cache-Control':'no-store'};
 export async function GET(req:Request){

@@ -2,13 +2,13 @@ import {database} from '@/db/store';
 import type {Market,MarketResponse} from './market';
 import type {MarketId} from './markets';
 import {fetchExchange} from './exchange-feed';
-export async function exchangeData(id:Exclude<MarketId,'dfm'>):Promise<MarketResponse>{
+export async function exchangeData(id:MarketId):Promise<MarketResponse>{
  const db=database();
  const rows=await db.prepare('SELECT generation,data FROM exchange_cache WHERE market=? ORDER BY key').bind(id).all<{generation:string;data:string}>();
  const generation=rows.results[0]?.generation;
  const pieces=rows.results.filter(r=>r.generation===generation).map(r=>JSON.parse(r.data) as Market);
  const cached=pieces.length?{...pieces[0],quotes:pieces.flatMap(p=>p.quotes)}:null;
- if(cached&&Date.now()-Date.parse(cached.fetchedAt)<15*60*1000)return {market:cached,connection:'ok'};
+ if(cached&&Date.now()-Date.parse(cached.fetchedAt)<60*1000)return {market:cached,connection:'ok'};
  try{
   const market=await fetchExchange(id);const statements=[];
   for(let start=0;start<market.quotes.length;start+=500){

@@ -3,7 +3,7 @@ import {tradingCurrency,type MarketId} from './markets';
 import type {Snapshot,PricePoint} from './portfolio-outlook';
 
 export function stockResearchPacket(quote:Quote,marketDate:string,archive:Snapshot[],imports:PricePoint[],marketId:MarketId='dfm'){
- const sourceName=marketId==='dfm'?'DFM bulletin':'Investing.com validated daily history';
+ const sourceName=marketId==='dfm'?'DFM official bulletin archive':'Provider daily history / saved snapshots';
  const official=new Map<string,number>();
  const volumes=new Map<string,number>();
  for(const day of archive)if(day.date<=marketDate&&Number.isFinite(day.prices[quote.symbol])&&day.prices[quote.symbol]>0)
