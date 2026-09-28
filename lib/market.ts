@@ -1,5 +1,5 @@
 export const MARKET_SOURCE='https://service.dfm.ae/Bulletins/';
-export type Quote={symbol:string;name:string;sector:string;price:number;previous:number;change:number;volume:number;lastTrade:string;sharia:boolean;currency?:string;exchange?:string;ticker?:string;isin?:string;priceKind?:'close'|'delayed';updatedAt?:string};
+export type Quote={symbol:string;name:string;sector:string;price:number;previous:number;change:number;volume:number;lastTrade:string;sharia:boolean;currency?:string;exchange?:string;ticker?:string;isin?:string;priceKind?:'close'|'delayed';updatedAt?:string;delaySeconds?:number};
 export type Market={date:string;fetchedAt:string;source:string;quotes:Quote[];id?:import('./markets').MarketId;sourceName?:string;totalCount?:number;priceKind?:'close'|'delayed';coverageNote?:string};
 export type MarketResponse={market:Market|null;connection:'ok'|'cached'|'unavailable';error?:string};
 const clean=(s:string)=>s.replace(/<[^>]*>/g,' ').replace(/&nbsp;|&#160;/g,' ').replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/\s+/g,' ').trim();

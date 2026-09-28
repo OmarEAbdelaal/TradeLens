@@ -21,7 +21,7 @@ export function parseFeed(rows:FeedRow[],id:MarketId,totalCount:number,now=new D
   if(!completedCache.has(date))completedCache.set(date,!!date&&sessionCompleted(date,id,now));
   const dailyChange=typeof change==='number'&&Number.isFinite(change)?change:0;
   const previous=valid&&typeof delta==='number'&&Number.isFinite(delta)?close-delta:valid?close:0;
-  quotes.push({symbol:id==='dfm'?ticker:row.s,ticker,name,exchange:String(exchange||''),currency:unit,sector:typeof sector==='string'?sector:'Other',price:valid?close:0,previous,change:dailyChange,volume:typeof volume==='number'&&Number.isFinite(volume)&&volume>0?volume:0,lastTrade:date,sharia:false,isin:typeof isin==='string'&&/^[A-Z]{2}[A-Z0-9]{9}[0-9]$/.test(isin)?isin:undefined,priceKind:completedCache.get(date)?'close':'delayed',updatedAt:instant?.toISOString()});seen.add(row.s);
+  quotes.push({symbol:id==='dfm'?ticker:row.s,ticker,name,exchange:String(exchange||''),currency:unit,sector:typeof sector==='string'?sector:'Other',price:valid?close:0,previous,change:dailyChange,volume:typeof volume==='number'&&Number.isFinite(volume)&&volume>0?volume:0,lastTrade:date,sharia:false,isin:typeof isin==='string'&&/^[A-Z]{2}[A-Z0-9]{9}[0-9]$/.test(isin)?isin:undefined,priceKind:completedCache.get(date)?'close':'delayed',updatedAt:instant?.toISOString(),delaySeconds:typeof _updateMode==='string'&&/^delayed_streaming_\d+$/.test(_updateMode)?Number(_updateMode.split('_').at(-1)):undefined});seen.add(row.s);
  }
  if(!quotes.length)throw new Error('No securities returned');
  const date=quotes.reduce((latest,q)=>q.lastTrade>latest?q.lastTrade:latest,'');
