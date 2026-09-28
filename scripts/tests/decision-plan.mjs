@@ -5,7 +5,7 @@ import {join} from 'node:path';
 import assert from 'node:assert/strict';
 const dir=mkdtempSync(join(tmpdir(),'tradelens-decision-'));
 try{
- for(const name of ['markets','market','paper','decision-plan','exchange-feed']){
+ for(const name of ['broker-fees','markets','market','paper','decision-plan','exchange-feed']){
   const js=ts.transpileModule(readFileSync(`lib/${name}.ts`,'utf8'),{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText.replace(/from '(\.\/[^']+)'/g,"from '$1.mjs'").replaceAll("'zod'",JSON.stringify(import.meta.resolve('zod')));
   writeFileSync(join(dir,`${name}.mjs`),js);
  }

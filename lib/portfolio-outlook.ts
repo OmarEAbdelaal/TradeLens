@@ -22,10 +22,10 @@ export function buildOutlook(market:Market,account:Account,snapshots:Snapshot[],
   const latest=recent.at(-1);
   const eligible=recent.length>=minSessions&&!!latest&&Date.parse(market.date)-Date.parse(latest.date)<=4*86400000&&q.lastTrade===market.date&&q.volume>0;
   const p=held.get(q.symbol);
-  const netExit=p?Math.round((p.qty*q.price-fees(p.qty*q.price,account.broker,account.marketId||'dfm',account.customFees).total-p.cost)*100)/100:null;
+  const netExit=p?Math.round((p.qty*q.price-fees(p.qty*q.price,account.broker,account.marketId||'dfm',account.customFees,p.qty,'sell').total-p.cost)*100)/100:null;
   return {symbol:q.symbol,name:q.name,price:q.price,sharia:q.sharia,volume:q.volume,sessions:recent.length,officialSessions:recent.filter(r=>official.has(r.date)).length,importedSessions:recent.filter(r=>!official.has(r.date)).length,recent,change5:recent.length>=6?percent(latest!.price,recent.at(-6)!.price):null,change20:recent.length>=21?percent(latest!.price,recent.at(-21)!.price):null,eligible,quantity:p?.qty||0,cost:p?.cost||0,netExit};
  });
  const holdings=signals.filter(s=>s.quantity>0);
  const candidates=signals.filter(s=>!s.quantity&&s.eligible).sort((a,b)=>(b.change5??-Infinity)-(a.change5??-Infinity)).slice(0,10);
- return {holdings,candidates,coverage:{marketDate:market.date,listed:signals.length,eligible:signals.filter(s=>s.eligible).length,officialDates:new Set(snapshots.map(s=>s.date).concat(market.date)).size,holdings:holdings.length,imported:imports.length},recentTrades:account.trades.slice(-25).map(t=>({symbol:t.symbol,side:t.side,qty:t.qty,price:t.price,fee:t.fee,quoteDate:t.quoteDate})),cash:account.cash};
+ return {holdings,candidates,coverage:{marketDate:market.date,listed:signals.length,eligible:signals.filter(s=>s.eligible).length,officialDates:new Set(snapshots.map(s=>s.date).concat(market.date)).size,holdings:holdings.length,imported:imports.length},recentTrades:account.trades.filter(t=>!t.voided).slice(-25).map(t=>({symbol:t.symbol,side:t.side,qty:t.qty,price:t.price,fee:t.fee,quoteDate:t.quoteDate})),cash:account.cash};
 }

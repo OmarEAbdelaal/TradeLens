@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import {DatabaseSync} from 'node:sqlite';
 const dir=mkdtempSync(join(tmpdir(),'stock-rankings-')),db=new DatabaseSync(':memory:');globalThis.__rankingDb=db;
 try{
- for(const [path,name] of [['lib/markets.ts','markets'],['lib/paper.ts','paper'],['lib/historical-rate.ts','historical-rate'],['app/api/stock-rankings/route.ts','route']]){let js=ts.transpileModule(readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText.replace(/from '(\.\/[^']+)'/g,"from '$1.mjs'").replaceAll("'@/lib/markets'","'./markets.mjs'").replaceAll("'@/db/store'","'./store.mjs'");writeFileSync(join(dir,name+'.mjs'),js)}
+ for(const [path,name] of [['lib/broker-fees.ts','broker-fees'],['lib/markets.ts','markets'],['lib/paper.ts','paper'],['lib/historical-rate.ts','historical-rate'],['app/api/stock-rankings/route.ts','route']]){let js=ts.transpileModule(readFileSync(path,'utf8'),{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText.replace(/from '(\.\/[^']+)'/g,"from '$1.mjs'").replaceAll("'@/lib/markets'","'./markets.mjs'").replaceAll("'@/db/store'","'./store.mjs'");writeFileSync(join(dir,name+'.mjs'),js)}
  writeFileSync(join(dir,'store.mjs'),`export const database=()=>({prepare:sql=>({bind:(...args)=>({all:async()=>({results:globalThis.__rankingDb.prepare(sql).all(...args)})})})});`);
  const {historicalRate}=await import(join(dir,'historical-rate.mjs')),{newAccount}=await import(join(dir,'paper.mjs'));
  const points=Array.from({length:161},(_,i)=>({date:new Date(Date.UTC(2025,0,1+i)).toISOString().slice(0,10),close:10+i*.5,source:'Provider'}));

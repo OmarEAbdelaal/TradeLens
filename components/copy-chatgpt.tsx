@@ -1,0 +1,7 @@
+'use client';
+import {useState} from 'react';
+export default function CopyChatGPT({prepare,language,disabled=false}:{prepare:()=>Promise<string|undefined>;language:string;disabled?:boolean}){
+ const [busy,setBusy]=useState(false),[message,setMessage]=useState(''),[fallback,setFallback]=useState('');const ar=language==='ar';
+ async function run(){const tab=window.open('about:blank','_blank');if(tab)tab.opener=null;setBusy(true);setMessage('');setFallback('');try{const prompt=fallback||await prepare();if(!prompt)throw new Error(ar?'تعذر تجهيز الـprompt.':'Could not prepare prompt.');try{await navigator.clipboard.writeText(prompt)}catch{setFallback(prompt);throw new Error(ar?'المتصفح منع النسخ. النص جاهز أدناه: حدده وانسخه، ثم اضغط الزر مرة أخرى.':'Clipboard blocked. Select and copy the text below, then retry.')}if(tab)tab.location.href='https://chatgpt.com/';else window.location.assign('https://chatgpt.com/');setMessage(ar?'تم النسخ وفتح ChatGPT. الصق الـprompt هناك.':'Copied and opened ChatGPT. Paste the prompt there.')}catch(e){tab?.close();setMessage(e instanceof Error?e.message:'Failed')}finally{setBusy(false)}}
+ return <span className="chatgpt-action"><button type="button" className="secondary" disabled={busy||disabled} onClick={()=>void run()}>{busy?(ar?'جارٍ تجهيز الـprompt…':'Preparing prompt…'):(ar?'نسخ AI PROMPT وافتح ChatGPT':'Copy AI PROMPT & open ChatGPT')} ↗</button>{message&&<small role="status">{message}</small>}{fallback&&<textarea aria-label="AI prompt" readOnly value={fallback} onFocus={e=>e.target.select()}/>}</span>
+}

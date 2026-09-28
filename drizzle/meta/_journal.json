@@ -57,6 +57,13 @@
       "when": 1790494514815,
       "tag": "0007_purple_bill_hollister",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1790590718387,
+      "tag": "0008_nice_mister_sinister",
+      "breakpoints": true
     }
   ]
 }

@@ -19,12 +19,12 @@ export function sizeDecision(d:Decision,context:{account:Account;marketId:Market
  if(![entry,stop,target].every(Number.isFinite)||stop<=0||stop>=entry||entry>=target||entry<context.price*.8||entry>context.price*1.2||!d.basis.trim()||!d.exitRule.trim()||d.preferenceScore===null||d.allocationPercent<=0)blocked.push('levels');
  const budget=Math.max(0,Math.min(account.cash,context.remainingCash??account.cash,context.equity*Math.min(d.allocationPercent,10)/100));
  const riskBudget=context.equity*.01;
- const fee=(v:number)=>fees(v,account.broker,marketId,account.customFees).total;
- const cost=(n:number)=>round(n*entry)+fee(n*entry);
- const loss=(n:number)=>round(n*(entry-stop)+fee(n*entry)+fee(n*stop));
+ const fee=(v:number,n:number,side:'buy'|'sell'='buy')=>fees(v,account.broker,marketId,account.customFees,n,side).total;
+ const cost=(n:number)=>round(n*entry)+fee(n*entry,n);
+ const loss=(n:number)=>round(n*(entry-stop)+fee(n*entry,n)+fee(n*stop,n,'sell'));
  let quantity=0;
  if(!blocked.length){let low=0,high=Math.min(10000000,Math.floor(budget/entry));while(low<high){const mid=Math.ceil((low+high)/2);if(cost(mid)<=budget&&loss(mid)<=riskBudget)low=mid;else high=mid-1}quantity=low;if(!quantity)blocked.push('budget')}
- let buyFee=quantity?fee(quantity*entry):0,sellFee=quantity?fee(quantity*target):0,entryCost=quantity?cost(quantity):0,riskAtStop=quantity?loss(quantity):0,netTarget=quantity?round(quantity*(target-entry)-buyFee-sellFee):0;
+ let buyFee=quantity?fee(quantity*entry,quantity):0,sellFee=quantity?fee(quantity*target,quantity,'sell'):0,entryCost=quantity?cost(quantity):0,riskAtStop=quantity?loss(quantity):0,netTarget=quantity?round(quantity*(target-entry)-buyFee-sellFee):0;
  if(quantity&&netTarget<=0){blocked.push('fees_exceed_return');quantity=0;buyFee=sellFee=entryCost=riskAtStop=netTarget=0}
  return {...d,allocationPercent:Math.min(d.allocationPercent,10),quantity,allocationActualPercent:context.equity>0?round(entryCost/context.equity*100):0,entryCost,buyFee,sellFee,netTarget,riskAtStop,rewardRisk:riskAtStop?round(netTarget/riskAtStop):0,blocked,horizonSessions:context.horizon,winProbability:null,feeProfile:account.broker,currency,riskBudgetPercent:1,maxPositionPercent:10};
 }
