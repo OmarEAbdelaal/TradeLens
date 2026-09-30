@@ -44,3 +44,10 @@ next-env.d.ts
 /.codex/
 /outputs/
 /work/
+
+# User data exports and database copies must never be committed.
+/exports/
+tradelens-account-*.json
+*.sqlite
+*.sqlite3
+*.db

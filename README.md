@@ -1,5 +1,9 @@
 # TradeLens — DFM paper portfolio
 
+Source code and change history live in this repository. The existing production site remains at [trade-lens.omar-e-abdelaal.chatgpt.site](https://trade-lens.omar-e-abdelaal.chatgpt.site).
+
+See [Data, source control, and deployment](docs/DATA_AND_DEPLOYMENT.md) for the exact location of application code, live account data, market caches, encrypted API keys, and the GitHub-to-Sites release workflow.
+
 Private Arabic-first paper-trading workspace. Root uses real DFM daily closing prices, with AED 10,000 virtual capital. `/legacy` preserves the original USD fictional/manual portfolio and its history in the unchanged `portfolios` table.
 
 ## Data and boundaries
